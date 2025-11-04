@@ -14,10 +14,23 @@ interface WeatherData {
   visibility: number;
 }
 
+interface DailyForecast {
+  date: string;
+  dayName: string;
+  tempMax: number;
+  tempMin: number;
+  condition: string;
+  humidity: number;
+  windSpeed: number;
+  precipitation: number;
+  weatherCode: number;
+}
+
 export const WeatherSearch = () => {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [forecast, setForecast] = useState<DailyForecast[]>([]);
   const { toast } = useToast();
 
   const searchWeather = async () => {
@@ -51,9 +64,9 @@ export const WeatherSearch = () => {
       const { latitude, longitude, name, admin1, country } = geoData.results[0];
       const locationName = `${name}${admin1 ? `, ${admin1}` : ""}, ${country}`;
 
-      // Obter dados do clima
+      // Obter dados do clima atual e previsão semanal
       const weatherResponse = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,visibility&timezone=auto`
+        `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,visibility&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_sum,wind_speed_10m_max,relative_humidity_2m_mean&timezone=auto`
       );
       const weatherData = await weatherResponse.json();
 
@@ -66,8 +79,29 @@ export const WeatherSearch = () => {
         condition,
         humidity: weatherData.current.relative_humidity_2m,
         windSpeed: Math.round(weatherData.current.wind_speed_10m),
-        visibility: Math.round(weatherData.current.visibility / 1000), // converter para km
+        visibility: Math.round(weatherData.current.visibility / 1000),
       });
+
+      // Processar previsão dos próximos 7 dias
+      const dailyForecasts: DailyForecast[] = weatherData.daily.time.map((date: string, index: number) => {
+        const dateObj = new Date(date);
+        const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+        const dayName = index === 0 ? "Hoje" : dayNames[dateObj.getDay()];
+
+        return {
+          date,
+          dayName,
+          tempMax: Math.round(weatherData.daily.temperature_2m_max[index]),
+          tempMin: Math.round(weatherData.daily.temperature_2m_min[index]),
+          condition: getWeatherCondition(weatherData.daily.weather_code[index]),
+          humidity: Math.round(weatherData.daily.relative_humidity_2m_mean[index]),
+          windSpeed: Math.round(weatherData.daily.wind_speed_10m_max[index]),
+          precipitation: Math.round(weatherData.daily.precipitation_sum[index] * 10) / 10,
+          weatherCode: weatherData.daily.weather_code[index],
+        };
+      });
+
+      setForecast(dailyForecasts);
     } catch (error) {
       toast({
         title: "Erro ao buscar clima",
@@ -146,49 +180,95 @@ export const WeatherSearch = () => {
         </Card>
 
         {weather && (
-          <Card className="backdrop-blur-lg bg-card/90 border-border/50 shadow-xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-5 w-5" />
-                <span className="text-lg font-medium">{weather.location}</span>
-              </div>
-
-              <div className="text-center space-y-2">
-                <div className="text-7xl font-bold text-foreground">
-                  {weather.temperature}°
+          <>
+            <Card className="backdrop-blur-lg bg-card/90 border-border/50 shadow-xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="space-y-6">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-5 w-5" />
+                  <span className="text-lg font-medium">{weather.location}</span>
                 </div>
-                <div className="text-2xl text-muted-foreground font-medium">
-                  {weather.condition}
-                </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/50">
-                  <Droplets className="h-6 w-6 text-primary" />
-                  <div className="text-sm text-muted-foreground">Umidade</div>
-                  <div className="text-xl font-semibold text-foreground">
-                    {weather.humidity}%
+                <div className="text-center space-y-2">
+                  <div className="text-7xl font-bold text-foreground">
+                    {weather.temperature}°
+                  </div>
+                  <div className="text-2xl text-muted-foreground font-medium">
+                    {weather.condition}
                   </div>
                 </div>
 
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/50">
-                  <Wind className="h-6 w-6 text-primary" />
-                  <div className="text-sm text-muted-foreground">Vento</div>
-                  <div className="text-xl font-semibold text-foreground">
-                    {weather.windSpeed} km/h
+                <div className="grid grid-cols-3 gap-4 pt-6 border-t border-border">
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/50">
+                    <Droplets className="h-6 w-6 text-primary" />
+                    <div className="text-sm text-muted-foreground">Umidade</div>
+                    <div className="text-xl font-semibold text-foreground">
+                      {weather.humidity}%
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/50">
-                  <Eye className="h-6 w-6 text-primary" />
-                  <div className="text-sm text-muted-foreground">Visibilidade</div>
-                  <div className="text-xl font-semibold text-foreground">
-                    {weather.visibility} km
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/50">
+                    <Wind className="h-6 w-6 text-primary" />
+                    <div className="text-sm text-muted-foreground">Vento</div>
+                    <div className="text-xl font-semibold text-foreground">
+                      {weather.windSpeed} km/h
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-secondary/50">
+                    <Eye className="h-6 w-6 text-primary" />
+                    <div className="text-sm text-muted-foreground">Visibilidade</div>
+                    <div className="text-xl font-semibold text-foreground">
+                      {weather.visibility} km
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+
+            {forecast.length > 0 && (
+              <Card className="backdrop-blur-lg bg-card/90 border-border/50 shadow-xl p-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <h2 className="text-2xl font-bold text-foreground mb-6">
+                  Previsão para 7 dias
+                </h2>
+                <div className="space-y-3">
+                  {forecast.map((day, index) => (
+                    <div
+                      key={day.date}
+                      className="flex items-center justify-between p-4 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="w-16 font-semibold text-foreground">
+                          {day.dayName}
+                        </div>
+                        <div className="text-sm text-muted-foreground flex-1 min-w-0">
+                          {day.condition}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Droplets className="h-4 w-4 text-primary" />
+                          <span className="text-foreground">{day.precipitation}mm</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Wind className="h-4 w-4 text-primary" />
+                          <span className="text-foreground">{day.windSpeed}km/h</span>
+                        </div>
+                        <div className="flex items-center gap-3 min-w-[100px] justify-end">
+                          <span className="text-lg font-semibold text-foreground">
+                            {day.tempMax}°
+                          </span>
+                          <span className="text-lg text-muted-foreground">
+                            {day.tempMin}°
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </>
         )}
 
         <div className="text-center text-sm text-muted-foreground/80">
