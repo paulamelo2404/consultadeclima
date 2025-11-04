@@ -2,8 +2,17 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Search, MapPin, Droplets, Wind, Eye } from "lucide-react";
+import { Search, MapPin, Droplets, Wind, Eye, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+interface CityOption {
+  name: string;
+  admin1?: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  displayName: string;
+}
 
 interface WeatherData {
   location: string;
@@ -31,9 +40,11 @@ export const WeatherSearch = () => {
   const [loading, setLoading] = useState(false);
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [forecast, setForecast] = useState<DailyForecast[]>([]);
+  const [cityOptions, setCityOptions] = useState<CityOption[]>([]);
+  const [showOptions, setShowOptions] = useState(false);
   const { toast } = useToast();
 
-  const searchWeather = async () => {
+  const searchCities = async () => {
     if (!city.trim()) {
       toast({
         title: "Digite uma cidade",
@@ -44,25 +55,57 @@ export const WeatherSearch = () => {
     }
 
     setLoading(true);
+    setShowOptions(false);
+    setCityOptions([]);
+
     try {
-      // Primeiro, obter coordenadas da cidade usando geocoding API
       const geoResponse = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=pt&format=json`
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=10&language=pt&format=json`
       );
       const geoData = await geoResponse.json();
 
       if (!geoData.results || geoData.results.length === 0) {
         toast({
           title: "Cidade não encontrada",
-          description: "Tente outro nome de cidade.",
+          description: "Tente com outro nome ou adicione o estado/país (ex: 'Belo Horizonte, MG' ou 'Paris, França')",
           variant: "destructive",
         });
         setLoading(false);
         return;
       }
 
-      const { latitude, longitude, name, admin1, country } = geoData.results[0];
-      const locationName = `${name}${admin1 ? `, ${admin1}` : ""}, ${country}`;
+      const options: CityOption[] = geoData.results.map((result: any) => ({
+        name: result.name,
+        admin1: result.admin1,
+        country: result.country,
+        latitude: result.latitude,
+        longitude: result.longitude,
+        displayName: `${result.name}${result.admin1 ? `, ${result.admin1}` : ""}, ${result.country}`,
+      }));
+
+      if (options.length === 1) {
+        await loadWeatherData(options[0]);
+      } else {
+        setCityOptions(options);
+        setShowOptions(true);
+        setLoading(false);
+      }
+    } catch (error) {
+      toast({
+        title: "Erro na busca",
+        description: "Não foi possível buscar as cidades. Tente novamente.",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const loadWeatherData = async (cityOption: CityOption) => {
+    setLoading(true);
+    setShowOptions(false);
+
+    try {
+      const { latitude, longitude, displayName } = cityOption;
 
       // Obter dados do clima atual e previsão semanal
       const weatherResponse = await fetch(
@@ -74,7 +117,7 @@ export const WeatherSearch = () => {
       const condition = getWeatherCondition(weatherCode);
 
       setWeather({
-        location: locationName,
+        location: displayName,
         temperature: Math.round(weatherData.current.temperature_2m),
         condition,
         humidity: weatherData.current.relative_humidity_2m,
@@ -164,20 +207,47 @@ export const WeatherSearch = () => {
                 placeholder="Digite o nome da cidade..."
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && searchWeather()}
+                onKeyPress={(e) => e.key === "Enter" && searchCities()}
                 className="pl-10 h-12 text-base"
               />
             </div>
             <Button
-              onClick={searchWeather}
+              onClick={searchCities}
               disabled={loading}
               size="lg"
               className="h-12 px-6"
             >
-              {loading ? "Buscando..." : "Buscar"}
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Buscando
+                </>
+              ) : (
+                "Buscar"
+              )}
             </Button>
           </div>
         </Card>
+
+        {showOptions && cityOptions.length > 0 && (
+          <Card className="backdrop-blur-lg bg-card/90 border-border/50 shadow-xl p-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <h3 className="text-lg font-semibold text-foreground mb-3">
+              Selecione a cidade:
+            </h3>
+            <div className="space-y-2">
+              {cityOptions.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => loadWeatherData(option)}
+                  className="w-full text-left p-3 rounded-lg bg-secondary/30 hover:bg-secondary/60 transition-colors flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                  <span className="text-foreground">{option.displayName}</span>
+                </button>
+              ))}
+            </div>
+          </Card>
+        )}
 
         {weather && (
           <>
