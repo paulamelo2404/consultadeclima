@@ -1,73 +1,86 @@
-# Welcome to your Lovable project
+# 🌦️ Consulta de Clima
 
-## Project info
+Um projeto moderno e responsivo para consultar as condições climáticas atuais de qualquer cidade ao redor do mundo. Desenvolvido com uma stack robusta para fornecer uma experiência de usuário rápida e intuitiva.
 
-**URL**: https://lovable.dev/projects/1e2749be-7121-43b5-be9a-0eb743ad485d
+## ✨ Funcionalidades
 
-## How can I edit this code?
+* **Busca de Clima:** Consulte o clima atual de cidades específicas.
+* **Informações Detalhadas:** Exibe temperatura, umidade, velocidade do vento e outras informações relevantes.
+* **Design Responsivo:** Interface otimizada para visualização em dispositivos móveis e desktop.
+* **Interface Moderna:** Utilização do `shadcn-ui` e `Tailwind CSS` para um design limpo e moderno.
 
-There are several ways of editing your application.
+## 🚀 Tecnologias Utilizadas
 
-**Use Lovable**
+Este projeto foi construído com a seguinte stack de tecnologias:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1e2749be-7121-43b5-be9a-0eb743ad485d) and start prompting.
+| Categoria | Tecnologia | Uso/Função |
+| :--- | :--- | :--- |
+| **Plataforma de Criação** | **Lovable** | Ambiente de desenvolvimento inicial e prototipagem. |
+| **Frontend Framework** | **React** | Biblioteca principal para a construção da interface do usuário. |
+| **Linguagem** | **TypeScript** | Garante tipagem estática e maior robustez ao código. |
+| **Estilização** | **Tailwind CSS** | Framework de CSS utility-first para design rápido. |
+| **Componentes UI** | **shadcn-ui** | Componentes de interface elegantes e acessíveis. |
+| **Ferramenta de Build** | **Vite** | Empacotador (bundler) rápido para o ambiente de desenvolvimento. |
+| **Gerenciador de Pacotes** | **bun** ou **npm** | Gerenciamento de dependências do projeto. |
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠️ Instalação e Uso
 
-**Use your preferred IDE**
+Para executar este projeto localmente, siga os passos abaixo.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Pré-requisitos
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Certifique-se de ter o **Node.js** e o **npm** (ou **Bun**) instalados em sua máquina.
 
-Follow these steps:
+### Passos
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1.  **Clone o Repositório**
+    ```bash
+    git clone [https://github.com/paulamelo2404/consultadeclima.git](https://github.com/paulamelo2404/consultadeclima.git)
+    ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2.  **Navegue até a Pasta do Projeto**
+    ```bash
+    cd consultadeclima
+    ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3.  **Instale as Dependências**
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+    Se estiver usando `npm`:
+    ```bash
+    npm install
+    ```
+    Ou, se estiver usando `Bun`:
+    ```bash
+    bun install
+    ```
 
-**Edit a file directly in GitHub**
+4.  **Inicie o Servidor de Desenvolvimento**
+    ```bash
+    npm run dev
+    # ou
+    bun run dev
+    ```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+O projeto será iniciado em modo de desenvolvimento, geralmente acessível em `http://localhost:5173`.
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔑 Configuração da Chave da API
 
-## What technologies are used for this project?
+Para que a consulta de clima funcione, você precisará de uma chave de API de um serviço de clima (ex: OpenWeatherMap, WeatherAPI, etc.).
 
-This project is built with:
+1.  Crie um arquivo `.env.local` na raiz do projeto.
+2.  Adicione sua chave de API com o nome de variável que o projeto espera (exemplo: `VITE_CLIMATE_API_KEY`).
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+    ```dotenv
+    VITE_CLIMATE_API_KEY="SUA_CHAVE_AQUI"
+    ```
+    *(Ajuste o nome da variável de ambiente conforme o que estiver sendo usado no código `src/`.)*
 
-## How can I deploy this project?
+## 📄 Licença
 
-Simply open [Lovable](https://lovable.dev/projects/1e2749be-7121-43b5-be9a-0eb743ad485d) and click on Share -> Publish.
+Este projeto está sob a licença **MIT**. Veja o arquivo `LICENSE` (se existir) para mais detalhes.
 
-## Can I connect a custom domain to my Lovable project?
+## 🧑‍💻 Autor
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Desenvolvido por **paulamelo2404**.
